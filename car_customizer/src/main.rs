@@ -3,26 +3,35 @@
 //Names: Garett Sheley, Cameron Crone, Nate Rardin, and Quinn Pulley
 
 //This is a function from Rust's standard library that allows for input and output
-use std::env;
+use std::io;
 
 //Main function
 fn main() {
-    //Depending on what input the user gives when running the code, it will determine which vehicle's data is printed out
-    let args: Vec<String> = env::args().collect();
+    println!("Please enter a number for the vehicle that you want");
+    println!("1 for Sedan");
+    println!("2 for SUV");
+    println!("3 for Sports Car");
+    //Depending on what input the user gives when running the code, it will determine 
+    //which vehicle's data is printed out
+    let mut vehicle_type = String::new();
+
+    io::stdin()
+        .read_line(&mut vehicle_type)
+        .expect("Failed to read line");
+
     //Storing the user's input
-    let vehicle_type = args[1].clone();
     println!("-------------------------");
     println!("Vehicle Number Chosen: {}", vehicle_type);
     //An input of "1" equates to a sedan
-    if vehicle_type == "1" {
+    if vehicle_type.trim() == "1" {
         sedan();
     }
     //An input of "2" equates to a suv
-    else if vehicle_type == "2" {
+    else if vehicle_type.trim() == "2" {
         suv();
     }
     //An input of "3" equates to a sports car
-    else if vehicle_type == "3" {
+    else if vehicle_type.trim() =="3" {
         sports_car();
     }
     //Any other input is invalid, and it notifies the user
