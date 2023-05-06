@@ -24,6 +24,12 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     println!("bnf_grammar_filepath: {}", config.bnf_grammar_filepath);
     println!("to_parse: {}", config.to_parse);
 
+    // ! needs error handling
+    let bnf_grammar = bnf_reader::read_bnf_file(&config.bnf_grammar_filepath);
+
+    let production_rules = bnf_reader::build_production_rules(&bnf_grammar);
+
+    println!("production_rules: {:?}", production_rules);
 
     Ok(())
 }
