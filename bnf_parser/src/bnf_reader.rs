@@ -70,6 +70,32 @@ pub fn build_grammar(bnf_grammar: &str) -> ContextFreeGrammar {
     }
 }
 
+pub struct ParseTree {
+    root: Symbol,
+    children: Vec<ParseTree>,
+}
+
+impl ParseTree {
+    fn new(root: Symbol) -> ParseTree {
+        ParseTree {
+            root,
+            children: Vec::new(),
+        }
+    }
+
+    fn add_child(&mut self, child: ParseTree) {
+        self.children.push(child);
+    }
+
+    fn span(&self) -> usize {
+        self.children.iter().map(|c| c.span()).sum()
+    }
+}
+
+fn tokenize_sentence(sentence: &str) -> Vec<&str> {
+    sentence.split(' ').collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,5 +130,15 @@ mod tests {
         let actual_grammar = build_grammar(bnf_contents);
 
         assert_eq!(actual_grammar, expected_grammar);
+    }
+
+    #[test]
+    fn test_tokenize_sentence() {
+        let sentence = "a + b * c";
+        let expected_tokens = vec!["a", "+", "b", "*", "c"];
+
+        let actual_tokens = tokenize_sentence(sentence);
+
+        assert_eq!(actual_tokens, expected_tokens);
     }
 }
