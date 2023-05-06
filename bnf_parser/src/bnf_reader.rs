@@ -3,10 +3,13 @@ use std::fs;
 
 type ProductionRule = (String, Vec<String>);
 
+//TODO - refactor to use Result for better error handling
+//TODO - refactor error handling in general throughout app to print to standard err instead of standard out
 pub fn read_bnf_file(filename: &str) -> String {
     fs::read_to_string(filename).expect("Could not read file")
 }
 
+//todo - start symbol should have a special indication of some kind
 pub fn build_production_rules(bnf_grammar: &str) -> HashSet<ProductionRule> {
     let mut production_rules = HashSet::new();
 
