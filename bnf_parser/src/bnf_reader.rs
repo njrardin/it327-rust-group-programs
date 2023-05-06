@@ -6,6 +6,13 @@ enum Symbol {
     Terminal(String),
     Nonterminal(String),
 }
+impl std::fmt::Display for Symbol {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            s => write!(f, "{}", s),
+        }
+    }
+}
 
 type ProductionRule = (Symbol, Vec<Symbol>);
 
@@ -70,6 +77,7 @@ pub fn build_grammar(bnf_grammar: &str) -> ContextFreeGrammar {
     }
 }
 
+#[derive(PartialEq)]
 pub struct ParseTree {
     root: Symbol,
     children: Vec<ParseTree>,
@@ -91,6 +99,29 @@ impl ParseTree {
         self.children.iter().map(|c| c.span()).sum()
     }
 }
+// implements fmt::Display for ParseTree to print the tree in a human-readable format which shows the tree structure
+impl std::fmt::Display for ParseTree {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        fn fmt_helper(tree: &ParseTree, f: &mut std::fmt::Formatter, depth: usize) -> std::fmt::Result {
+            let indent = "-".repeat(depth * 2);
+            writeln!(f, "{}|-{}", indent, tree.root)?;
+            for child in &tree.children {
+                fmt_helper(child, f, depth + 1)?;
+            }
+            Ok(())
+        }
+
+        fmt_helper(self, f, 0)
+    }
+}
+//uses same output as display for debug
+//TODO - refactor to use display instead of fmt
+impl std::fmt::Debug for ParseTree {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.fmt(f)
+    }
+}
+
 
 fn tokenize_sentence(sentence: &str) -> Vec<&str> {
     sentence.split(' ').collect()
