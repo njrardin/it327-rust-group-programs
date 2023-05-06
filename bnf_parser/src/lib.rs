@@ -1,5 +1,7 @@
 use std::error::Error;
 
+mod bnf_reader;
+
 pub struct Config {
     pub bnf_grammar_filepath: String,
     pub to_parse: String,
@@ -18,12 +20,10 @@ impl Config {
     }
 }
 
-/// 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    //TODO - implement
     println!("bnf_grammar_filepath: {}", config.bnf_grammar_filepath);
     println!("to_parse: {}", config.to_parse);
 
+
     Ok(())
 }
-
