@@ -27,7 +27,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // ! needs error handling
     let bnf_grammar = bnf_reader::read_bnf_file(&config.bnf_grammar_filepath);
 
-    let production_rules = bnf_reader::build_production_rules(&bnf_grammar);
+    let production_rules = bnf_reader::build_grammar(&bnf_grammar);
 
     println!("production_rules: {:?}", production_rules);
 
