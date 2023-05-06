@@ -1,19 +1,18 @@
 use std::collections::HashSet;
 use std::fs;
 
-type ProductionRule = (String, Vec<String>);
-
-#[derive(Debug)]
-pub struct ContextFreeGrammar {
-    start_symbol: String,
-    production_rules: HashSet<ProductionRule>,
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+enum Symbol {
+    Terminal(String),
+    Nonterminal(String),
 }
 
-impl PartialEq for ContextFreeGrammar {
-    fn eq(&self, other: &Self) -> bool {
-        self.start_symbol == other.start_symbol
-            && self.production_rules == other.production_rules
-    }
+type ProductionRule = (Symbol, Vec<Symbol>);
+
+#[derive(Debug, PartialEq)]
+pub struct ContextFreeGrammar {
+    start_symbol: Symbol,
+    production_rules: HashSet<ProductionRule>,
 }
 
 //TODO - refactor to use Result for better error handling
@@ -24,7 +23,7 @@ pub fn read_bnf_file(filename: &str) -> String {
 
 pub fn build_grammar(bnf_grammar: &str) -> ContextFreeGrammar {
     let mut production_rules = HashSet::new();
-    let mut start_symbol = String::new();
+    let mut start_symbol = Symbol::Nonterminal(String::new());
 
     let mut first_iteration = true;
     for line in bnf_grammar.lines() {
@@ -36,20 +35,31 @@ pub fn build_grammar(bnf_grammar: &str) -> ContextFreeGrammar {
         }
 
         let parts: Vec<&str> = line.splitn(2, "::=").map(|s| s.trim()).collect();
-        let symbol = parts[0].to_string();
+        let lhs_symbol = Symbol::Nonterminal(parts[0].to_string());
         let expressions: Vec<String> = parts[1].split('|').map(|s| s.trim().to_string()).collect();
 
         for expression in expressions {
+            let rhs_symbols: Vec<Symbol> = expression
+                .split(' ')
+                .map(|s| {
+                    if s.starts_with('<') && s.ends_with('>') {
+                        Symbol::Nonterminal(s.to_string())
+                    } else {
+                        Symbol::Terminal(s.to_string())
+                    }
+                })
+                .collect();
+
             let rule: ProductionRule = (
-                symbol.clone(),
-                expression.split(' ').map(|s| s.to_string()).collect(),
+                lhs_symbol.clone(),
+                rhs_symbols,
             );
             production_rules.insert(rule);
         }
 
         if first_iteration {
             // first line's symbol should be the start symbol
-            start_symbol = symbol;
+            start_symbol = lhs_symbol;
             first_iteration = false;
         }
     }
@@ -70,23 +80,24 @@ mod tests {
                             <op> ::= + | - | * | / \n
                             <char> ::= a | b | c";
 
-        let expected_rules: HashSet<(String, Vec<String>)> = [
-            ("<expr>", vec!["<char>"]),
-            ("<expr>", vec!["<char>", "<op>", "<expr>"]),
-            ("<op>", vec!["+"]),
-            ("<op>", vec!["-"]),
-            ("<op>", vec!["*"]),
-            ("<op>", vec!["/"]),
-            ("<char>", vec!["a"]),
-            ("<char>", vec!["b"]),
-            ("<char>", vec!["c"]),
+        let expected_rules: HashSet<(Symbol, Vec<Symbol>)> = [
+            (Symbol::Nonterminal("<expr>".to_string()), vec![Symbol::Nonterminal("<char>".to_string())]),
+            (Symbol::Nonterminal("<expr>".to_string()), vec![Symbol::Nonterminal("<char>".to_string()), 
+            Symbol::Nonterminal("<op>".to_string()), Symbol::Nonterminal("<expr>".to_string())]),
+            (Symbol::Nonterminal("<op>".to_string()), vec![Symbol::Terminal("+".to_string())]),
+            (Symbol::Nonterminal("<op>".to_string()), vec![Symbol::Terminal("-".to_string())]),
+            (Symbol::Nonterminal("<op>".to_string()), vec![Symbol::Terminal("*".to_string())]),
+            (Symbol::Nonterminal("<op>".to_string()), vec![Symbol::Terminal("/".to_string())]),
+            (Symbol::Nonterminal("<char>".to_string()), vec![Symbol::Terminal("a".to_string())]),
+            (Symbol::Nonterminal("<char>".to_string()), vec![Symbol::Terminal("b".to_string())]),
+            (Symbol::Nonterminal("<char>".to_string()), vec![Symbol::Terminal("c".to_string())]),
         ]
         .iter()
-        .map(|&(s, ref v)| (s.to_string(), v.iter().map(|&s| s.to_string()).collect()))
+        .map(|(lhs, rhs)| (lhs.clone(), rhs.clone()))
         .collect();
 
         let expected_grammar = ContextFreeGrammar {
-            start_symbol: "<expr>".to_string(),
+            start_symbol: Symbol::Nonterminal("<expr>".to_string()),
             production_rules: expected_rules,
         };
 
