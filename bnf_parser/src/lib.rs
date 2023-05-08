@@ -25,11 +25,15 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     println!("to_parse: {}", config.to_parse);
 
     // ! needs error handling
-    let bnf_grammar = bnf_reader::read_bnf_file(&config.bnf_grammar_filepath);
+    let bnf_grammar = read_bnf_file(&config.bnf_grammar_filepath);
 
     let production_rules = bnf_reader::build_grammar(&bnf_grammar);
 
     println!("production_rules: {:?}", production_rules);
 
     Ok(())
+}
+
+pub fn read_bnf_file(filename: &str) -> String {
+    fs::read_to_string(filename).expect("Could not read file")
 }
