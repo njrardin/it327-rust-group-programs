@@ -1,33 +1,20 @@
 use std::collections::HashSet;
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
-enum Symbol {
-    Terminal(String),
-    Nonterminal(String),
-}
-impl std::fmt::Display for Symbol {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            s => write!(f, "{}", s),
-        }
-    }
-}
-
-type ProductionRule = (Symbol, Vec<Symbol>);
+type ProductionRule = (String, Vec<String>);
 
 #[derive(Debug, PartialEq)]
 pub struct ContextFreeGrammar {
-    start_symbol: Symbol,
+    variables: HashSet<String>,
+    terminals: HashSet<String>,
+    start_symbol: String,
     production_rules: HashSet<ProductionRule>,
 }
 
-//TODO - refactor to use Result for better error handling
-//TODO - refactor error handling in general throughout app to print to standard err instead of standard out
-
-
 pub fn build_grammar(bnf_grammar: &str) -> ContextFreeGrammar {
+    let mut variables = HashSet::new();
+    let mut terminals = HashSet::new();
+    let mut start_symbol = String::new();
     let mut production_rules = HashSet::new();
-    let mut start_symbol = Symbol::Nonterminal(String::new());
 
     let mut first_iteration = true;
     for line in bnf_grammar.lines() {
@@ -39,20 +26,27 @@ pub fn build_grammar(bnf_grammar: &str) -> ContextFreeGrammar {
         }
 
         let parts: Vec<&str> = line.splitn(2, "::=").map(|s| s.trim()).collect();
-        let lhs_symbol = Symbol::Nonterminal(parts[0].to_string());
-        let expressions: Vec<String> = parts[1].split('|').map(|s| s.trim().to_string()).collect();
 
+        let lhs_symbol = parts[0].to_string();
+        variables.insert(lhs_symbol.clone());
+
+        let expressions: Vec<String> = parts[1].split('|').map(|s| s.trim().to_string()).collect();
         for expression in expressions {
-            let rhs_symbols: Vec<Symbol> = expression
+            let rhs_symbols: Vec<String> = expression
                 .split(' ')
-                .map(|s| {
-                    if s.starts_with('<') && s.ends_with('>') {
-                        Symbol::Nonterminal(s.to_string())
-                    } else {
-                        Symbol::Terminal(s.to_string())
-                    }
-                })
+                .map(|s| s.trim().to_string())
                 .collect();
+
+            // add all new symbols to terminals or variables as appropriate
+            for symbol in &rhs_symbols {
+                if !variables.contains(symbol) && !terminals.contains(symbol) {
+                    if symbol.starts_with('<') && symbol.ends_with('>') {
+                        variables.insert(symbol.clone());
+                    } else {
+                        terminals.insert(symbol.clone());
+                    }
+                }
+            }                
 
             let rule: ProductionRule = (
                 lhs_symbol.clone(),
@@ -69,59 +63,11 @@ pub fn build_grammar(bnf_grammar: &str) -> ContextFreeGrammar {
     }
 
     ContextFreeGrammar {
+        variables,
+        terminals,
         start_symbol,
         production_rules,
     }
-}
-
-#[derive(PartialEq)]
-pub struct ParseTree {
-    root: Symbol,
-    children: Vec<ParseTree>,
-}
-
-impl ParseTree {
-    fn new(root: Symbol) -> ParseTree {
-        ParseTree {
-            root,
-            children: Vec::new(),
-        }
-    }
-
-    fn add_child(&mut self, child: ParseTree) {
-        self.children.push(child);
-    }
-
-    fn span(&self) -> usize {
-        self.children.iter().map(|c| c.span()).sum()
-    }
-}
-// implements fmt::Display for ParseTree to print the tree in a human-readable format which shows the tree structure
-impl std::fmt::Display for ParseTree {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        fn fmt_helper(tree: &ParseTree, f: &mut std::fmt::Formatter, depth: usize) -> std::fmt::Result {
-            let indent = "-".repeat(depth * 2);
-            writeln!(f, "{}|-{}", indent, tree.root)?;
-            for child in &tree.children {
-                fmt_helper(child, f, depth + 1)?;
-            }
-            Ok(())
-        }
-
-        fmt_helper(self, f, 0)
-    }
-}
-//uses same output as display for debug
-//TODO - refactor to use display instead of fmt
-impl std::fmt::Debug for ParseTree {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        self.fmt(f)
-    }
-}
-
-
-fn tokenize_sentence(sentence: &str) -> Vec<&str> {
-    sentence.split(' ').collect()
 }
 
 #[cfg(test)]
@@ -130,43 +76,50 @@ mod tests {
 
     #[test]
     fn test_build_grammar() {
-        let bnf_contents = "<expr> ::= <char> | <char> <op> <expr> \n
-                            <op> ::= + | - | * | / \n
-                            <char> ::= a | b | c";
+        let bnf_contents = "<S> ::= <NP> <VP> \n
+                            <NP> ::= The dog | The cat \n
+                            <VP> ::= played with the ball | ate its food";
+                        
 
-        let expected_rules: HashSet<(Symbol, Vec<Symbol>)> = [
-            (Symbol::Nonterminal("<expr>".to_string()), vec![Symbol::Nonterminal("<char>".to_string())]),
-            (Symbol::Nonterminal("<expr>".to_string()), vec![Symbol::Nonterminal("<char>".to_string()), 
-            Symbol::Nonterminal("<op>".to_string()), Symbol::Nonterminal("<expr>".to_string())]),
-            (Symbol::Nonterminal("<op>".to_string()), vec![Symbol::Terminal("+".to_string())]),
-            (Symbol::Nonterminal("<op>".to_string()), vec![Symbol::Terminal("-".to_string())]),
-            (Symbol::Nonterminal("<op>".to_string()), vec![Symbol::Terminal("*".to_string())]),
-            (Symbol::Nonterminal("<op>".to_string()), vec![Symbol::Terminal("/".to_string())]),
-            (Symbol::Nonterminal("<char>".to_string()), vec![Symbol::Terminal("a".to_string())]),
-            (Symbol::Nonterminal("<char>".to_string()), vec![Symbol::Terminal("b".to_string())]),
-            (Symbol::Nonterminal("<char>".to_string()), vec![Symbol::Terminal("c".to_string())]),
-        ]
-        .iter()
-        .map(|(lhs, rhs)| (lhs.clone(), rhs.clone()))
+        let expected_rules: HashSet<(String, Vec<String>)> = vec![
+            ("<S>".to_string(), vec!["<NP>".to_string(), "<VP>".to_string()]),
+            ("<NP>".to_string(), vec!["The".to_string(), "dog".to_string()]),
+            ("<NP>".to_string(), vec!["The".to_string(), "cat".to_string()]),
+            ("<VP>".to_string(), vec!["played".to_string(), "with".to_string(), "the".to_string(), "ball".to_string()]),
+            ("<VP>".to_string(), vec!["ate".to_string(), "its".to_string(), "food".to_string()]),
+        ].into_iter()
+        .collect();
+
+        let expected_variables: HashSet<String> = vec![
+            "<S>".to_string(),
+            "<NP>".to_string(),
+            "<VP>".to_string(),
+        ].into_iter()
+        .collect();
+
+        let expected_terminals: HashSet<String> = vec![
+            "The".to_string(),
+            "dog".to_string(),
+            "cat".to_string(),
+            "played".to_string(),
+            "with".to_string(),
+            "the".to_string(),
+            "ball".to_string(),
+            "ate".to_string(),
+            "its".to_string(),
+            "food".to_string(),
+        ].into_iter()
         .collect();
 
         let expected_grammar = ContextFreeGrammar {
-            start_symbol: Symbol::Nonterminal("<expr>".to_string()),
+            variables: expected_variables,
+            terminals: expected_terminals,
+            start_symbol: "<S>".to_string(),
             production_rules: expected_rules,
         };
 
         let actual_grammar = build_grammar(bnf_contents);
 
         assert_eq!(actual_grammar, expected_grammar);
-    }
-
-    #[test]
-    fn test_tokenize_sentence() {
-        let sentence = "a + b * c";
-        let expected_tokens = vec!["a", "+", "b", "*", "c"];
-
-        let actual_tokens = tokenize_sentence(sentence);
-
-        assert_eq!(actual_tokens, expected_tokens);
     }
 }
