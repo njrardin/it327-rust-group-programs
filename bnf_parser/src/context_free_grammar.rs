@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::fmt;
 
 type ProductionRule = (String, Vec<String>);
 
@@ -8,6 +9,45 @@ pub struct ContextFreeGrammar {
     terminals: HashSet<String>,
     start_symbol: String,
     production_rules: HashSet<ProductionRule>,
+}
+
+impl fmt::Display for ContextFreeGrammar {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut output = String::new();
+
+        output.push_str("Variables =\n");
+        for variable in &self.variables {
+            output.push_str(&format!("\t{}\n", variable));
+        }
+
+        output.push_str("\nTerminals =\n");
+        for terminal in &self.terminals {
+            output.push_str(&format!("\t{}\n", terminal));
+        }
+
+        output.push_str(&format!("\nStart Symbol = {}\n", self.start_symbol));
+
+        output.push_str("\nProduction Rules =\n");
+        for rule in &self.production_rules {
+            output.push_str(&format!("\t{}\n", format_rule(rule)));
+        }
+
+        write!(f, "{}", output)
+    }
+}
+
+fn format_rule(rule: &ProductionRule) -> String {
+    let lhs = &rule.0;
+    let rhs = &rule.1;
+
+    let mut output = String::new();
+    output.push_str(&format!("{} ::= ", lhs));
+
+    for symbol in rhs {
+        output.push_str(&format!("{} ", symbol));
+    }
+
+    output
 }
 
 pub fn build_grammar(bnf_grammar: &str) -> ContextFreeGrammar {

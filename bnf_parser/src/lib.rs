@@ -6,32 +6,30 @@ use context_free_grammar as cfg;
 
 pub struct Config {
     pub bnf_grammar_filepath: String,
-    pub to_parse: String,
 }
 
 impl Config {
     pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("Usage: bnf_parser <bnf-grammar-filepath> <string-to-parse>");
+        if args.len() < 2 {
+            return Err("Usage: bnf_lexer <bnf-grammar-filepath>");
         }
 
         let bnf_grammar_filepath = args[1].clone();
-        let to_parse = args[2].clone();
 
-        Ok(Config { bnf_grammar_filepath, to_parse })
+        Ok(Config { bnf_grammar_filepath })
     }
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     println!("bnf_grammar_filepath: {}", config.bnf_grammar_filepath);
-    println!("to_parse: {}", config.to_parse);
 
     // ! needs error handling
     let bnf_grammar = read_bnf_file(&config.bnf_grammar_filepath);
 
-    let production_rules = cfg::build_grammar(&bnf_grammar);
+    let grammar = cfg::build_grammar(&bnf_grammar);
 
-    println!("production_rules: {:?}", production_rules);
+    // prints grammar to the screen
+    println!("{}", grammar);
 
     Ok(())
 }
