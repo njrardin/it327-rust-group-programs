@@ -1,7 +1,8 @@
 use std::error::Error;
 use std::fs;
 
-mod regular_grammar;
+mod context_free_grammar;
+use context_free_grammar as cfg;
 
 pub struct Config {
     pub bnf_grammar_filepath: String,
@@ -28,7 +29,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // ! needs error handling
     let bnf_grammar = read_bnf_file(&config.bnf_grammar_filepath);
 
-    let production_rules = regular_grammar::build_grammar(&bnf_grammar);
+    let production_rules = cfg::build_grammar(&bnf_grammar);
 
     println!("production_rules: {:?}", production_rules);
 

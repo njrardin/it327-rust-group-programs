@@ -3,14 +3,14 @@ use std::collections::HashSet;
 type ProductionRule = (String, Vec<String>);
 
 #[derive(Debug, PartialEq)]
-pub struct RegularGrammar {
+pub struct ContextFreeGrammar {
     variables: HashSet<String>,
     terminals: HashSet<String>,
     start_symbol: String,
     production_rules: HashSet<ProductionRule>,
 }
 
-pub fn build_grammar(bnf_grammar: &str) -> RegularGrammar {
+pub fn build_grammar(bnf_grammar: &str) -> ContextFreeGrammar {
     let mut variables = HashSet::new();
     let mut terminals = HashSet::new();
     let mut start_symbol = String::new();
@@ -62,7 +62,7 @@ pub fn build_grammar(bnf_grammar: &str) -> RegularGrammar {
         }
     }
 
-    RegularGrammar {
+    ContextFreeGrammar {
         variables,
         terminals,
         start_symbol,
@@ -111,7 +111,7 @@ mod tests {
         ].into_iter()
         .collect();
 
-        let expected_grammar = RegularGrammar {
+        let expected_grammar = ContextFreeGrammar {
             variables: expected_variables,
             terminals: expected_terminals,
             start_symbol: "<S>".to_string(),
