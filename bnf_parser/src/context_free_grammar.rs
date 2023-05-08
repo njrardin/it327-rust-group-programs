@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::fs;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 enum Symbol {
