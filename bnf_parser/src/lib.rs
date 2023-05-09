@@ -23,8 +23,7 @@ impl Config {
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     println!("bnf_grammar_filepath: {}", config.bnf_grammar_filepath);
 
-    // ! needs error handling
-    let bnf_grammar = read_bnf_file(&config.bnf_grammar_filepath);
+    let bnf_grammar = read_bnf_file(&config.bnf_grammar_filepath)?;
 
     let grammar = cfg::build_grammar(&bnf_grammar);
 
@@ -34,6 +33,6 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn read_bnf_file(filename: &str) -> String {
-    fs::read_to_string(filename).expect("Could not read file")
+pub fn read_bnf_file(filename: &str) -> Result<String, Box<dyn Error>> {
+    fs::read_to_string(filename).map_err(|e| e.into())
 }
