@@ -3,6 +3,7 @@ use std::fmt;
 
 type ProductionRule = (String, Vec<String>);
 
+/// Struct representing a context free grammar.
 #[derive(Debug, PartialEq)]
 pub struct ContextFreeGrammar {
     variables: HashSet<String>,
@@ -10,7 +11,6 @@ pub struct ContextFreeGrammar {
     start_symbol: String,
     production_rules: HashSet<ProductionRule>,
 }
-
 impl fmt::Display for ContextFreeGrammar {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut output = String::new();
@@ -36,6 +36,7 @@ impl fmt::Display for ContextFreeGrammar {
     }
 }
 
+/// Formats a production rule into a string.
 fn format_rule(rule: &ProductionRule) -> String {
     let lhs = &rule.0;
     let rhs = &rule.1;
@@ -50,6 +51,7 @@ fn format_rule(rule: &ProductionRule) -> String {
     output
 }
 
+/// Builds a context free grammar from a BNF grammar string.
 pub fn build_grammar(bnf_grammar: &str) -> ContextFreeGrammar {
     let mut variables = HashSet::new();
     let mut terminals = HashSet::new();
@@ -128,54 +130,6 @@ fn remove_start_on_rhs(grammar: &mut ContextFreeGrammar) -> () {
     }
 }
 
-// /// Converts a grammar to Chompsky Normal Form. Grammar must already be simplified.
-// fn convert_to_chompsky_normal_form(grammar: &mut ContextFreeGrammar) -> () {
-
-//     //2. Decompose mixed terminals and variables on RHS (e.g. A ::= xY)
-//     for rule in grammar.production_rules.clone() {
-//         let mut new_rules = HashSet::new();
-//         let lhs = rule.0.clone();
-//         let rhs = rule.1.clone();
-//         // check whether the rule has mixed terminals and variables
-//         let mut contains_terminal = false;
-//         for symbol in rhs.clone() {
-//             if grammar.terminals.contains(&symbol) {
-//                 contains_terminal = true;
-//                 break;
-//             }
-//         }
-//         let mut contains_variable = false;
-//         for symbol in rhs.clone() {
-//             if grammar.variables.contains(&symbol) {
-//                 contains_variable = true;
-//                 break;
-//             }
-//         }
-//         let contains_mixed = contains_terminal && contains_variable;
-//         // skip this rule if it doesn't have mixed terminals and variables
-//         if !contains_mixed {
-//             continue;
-//         }
-//         // if it does have mixed, create a new rule mapping the lhs to each terminal
-//         for symbol in rhs.clone() {
-//             if grammar.terminals.contains(&symbol) {
-//                 new_rules.insert((lhs.clone(), vec![symbol]));
-//             }
-//         }
-//         // replace the old rule with a new rule mapping the lhs to the new variables
-//         let mut new_rhs = Vec::new();
-//         for symbol in rhs.clone() {
-//                 new_rhs.push(symbol);
-//         }
-//         // insert the new rules
-//         new_rules.insert((rule.0.clone(), new_rhs));
-//         // remove the old rule
-//         grammar.production_rules.remove(&rule);
-//     }
-
-//     //3. Decompose >2 variables on RHS
-//     for rule 
-// }
 
 #[cfg(test)]
 mod tests {
